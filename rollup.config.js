@@ -9,7 +9,7 @@ const BASE_PATH = process.cwd();
 
 const functions = [];
 
-const builtIns = ['oas']
+const builtIns = ['oas', 'asyncapi']
 
 for (const rulesetName of builtIns) {
   const targetDir = path.join(BASE_PATH, `dist/rulesets/${rulesetName}/functions/`);

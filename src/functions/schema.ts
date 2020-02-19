@@ -1,7 +1,6 @@
 import { decodePointerFragment } from '@stoplight/json';
-import { Optional } from '@stoplight/types';
+import { JsonPath, Optional } from '@stoplight/types';
 import * as AJV from 'ajv';
-import { ValidateFunction } from 'ajv';
 import * as jsonSpecv4 from 'ajv/lib/refs/json-schema-draft-04.json';
 import * as jsonSpecv6 from 'ajv/lib/refs/json-schema-draft-06.json';
 import { IOutputError } from 'better-ajv-errors';
@@ -40,6 +39,14 @@ const logger = {
 
 const ajvInstances = {};
 
+export const addWellKnownFormats = (ajv: AJV.Ajv): void => {
+  ajv.addFormat('int32', { type: 'number', validate: oasFormatValidator.int32 });
+  ajv.addFormat('int64', { type: 'number', validate: oasFormatValidator.int64 });
+  ajv.addFormat('float', { type: 'number', validate: oasFormatValidator.float });
+  ajv.addFormat('double', { type: 'number', validate: oasFormatValidator.double });
+  ajv.addFormat('byte', { type: 'string', validate: oasFormatValidator.byte });
+};
+
 function getAjv(oasVersion: Optional<number>, allErrors: Optional<boolean>): AJV.Ajv {
   const type: string = oasVersion && oasVersion >= 2 ? 'oas' + oasVersion : 'jsonschema';
   if (typeof ajvInstances[type] !== 'undefined') {
@@ -65,11 +72,7 @@ function getAjv(oasVersion: Optional<number>, allErrors: Optional<boolean>): AJV
   // @ts-ignore
   ajv._refs['http://json-schema.org/schema'] = 'http://json-schema.org/draft-04/schema';
 
-  ajv.addFormat('int32', { type: 'number', validate: oasFormatValidator.int32 });
-  ajv.addFormat('int64', { type: 'number', validate: oasFormatValidator.int64 });
-  ajv.addFormat('float', { type: 'number', validate: oasFormatValidator.float });
-  ajv.addFormat('double', { type: 'number', validate: oasFormatValidator.double });
-  ajv.addFormat('byte', { type: 'string', validate: oasFormatValidator.byte });
+  addWellKnownFormats(ajv);
 
   ajvInstances[type] = ajv;
   return ajv;
@@ -85,7 +88,12 @@ function getSchemaId(schemaObj: JSONSchema): void | string {
   }
 }
 
-const validators = new (class extends WeakMap<JSONSchema, ValidateFunction> {
+export interface IAjvValidator {
+  (data: any): boolean | PromiseLike<any>;
+  errors?: null | AJV.ErrorObject[];
+}
+
+const validators = new (class extends WeakMap<JSONSchema, IAjvValidator> {
   public get({ schema: schemaObj, oasVersion, allErrors }: ISchemaOptions) {
     const ajv = getAjv(oasVersion, allErrors);
     const schemaId = getSchemaId(schemaObj);
@@ -155,9 +163,22 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
   // we already access a resolved object in src/functions/schema-path.ts
   const { schema: schemaObj } = opts;
 
+  // we used the compiled validation now, hence this lookup here (see the logic above for more info)
+    const validator: IAjvValidator = validators.get(opts);
+
+  PerformSchemaValidation(validator, targetVal, results, schemaObj, path);
+
+  return results;
+};
+
+export function PerformSchemaValidation(
+  validator: IAjvValidator,
+  targetVal: any,
+  results: IFunctionResult[],
+  schemaObj: object,
+  path: JsonPath,
+) {
   try {
-    // we used the compiled validation now, hence this lookup here (see the logic above for more info)
-    const validator = validators.get(opts);
     if (!validator(targetVal) && validator.errors) {
       opts.prepareResults?.(validator.errors);
 
@@ -195,6 +216,4 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
       throw ex;
     }
   }
-
-  return results;
-};
+}

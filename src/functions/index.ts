@@ -1,4 +1,5 @@
 import { alphabetical } from './alphabetical';
+import { asyncApi2PayloadValidation } from './asyncApi2PayloadValidation';
 import { casing } from './casing';
 import { enumeration } from './enumeration';
 import { falsy } from './falsy';
@@ -24,6 +25,7 @@ export const functions = {
   undefined,
   xor,
   unreferencedReusableObject,
+  asyncApi2PayloadValidation,
 };
 
 export type CoreFunctions = typeof functions;
