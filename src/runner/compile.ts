@@ -112,3 +112,31 @@ function serializeESTree(node: jsep.Expression): string {
       throw new Error('Unsupported syntax');
   }
 }
+
+export function transformJsonPathsExpressions(
+  expressions: string | string[] | RegExp | RegExp[],
+): RegExp | RegExp[] | string | string[] {
+  if (typeof expressions === 'string') {
+    return compile(expressions) ?? expressions;
+  }
+
+  if (!Array.isArray(expressions) || isTransformedExpressionArray(expressions)) {
+    return expressions;
+  }
+
+  const transformedExpressions: RegExp[] = [];
+  for (const item of expressions) {
+    const compiled = compile(item);
+    if (compiled !== null) {
+      transformedExpressions.push(compiled);
+    } else {
+      return expressions;
+    }
+  }
+
+  return transformedExpressions;
+}
+
+function isTransformedExpressionArray(arr: RegExp[] | string[]): arr is RegExp[] {
+  return arr.length === 0 || typeof arr[0] !== 'string';
+}

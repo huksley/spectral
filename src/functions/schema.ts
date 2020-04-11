@@ -128,24 +128,25 @@ const cleanAJVErrorMessage = (message: string, path: Optional<string>, suggestio
 };
 
 export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
-  const results: IFunctionResult[] = [];
-
   const path = paths.target || paths.given;
 
-  if (targetVal === void 0)
+  if (targetVal === void 0) {
     return [
       {
         path,
         message: `{{property|double-quotes|append-property}}does not exist`,
       },
     ];
+  }
+
+  const results: IFunctionResult[] = [];
 
   // we already access a resolved object in src/functions/schema-path.ts
-  const { schema: schemaObj } = opts;
+  const { schema: schemaObj, oasVersion } = opts!; // todo: avoid this and do validation.
 
   try {
     // we used the compiled validation now, hence this lookup here (see the logic above for more info)
-    const validator = validators.get(schemaObj, opts.oasVersion);
+    const validator = validators.get(schemaObj, oasVersion);
     if (!validator(targetVal) && validator.errors) {
       try {
         results.push(

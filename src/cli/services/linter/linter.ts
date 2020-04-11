@@ -11,7 +11,7 @@ import {
 } from '../../../formats';
 import { readParsable } from '../../../fs/reader';
 import * as Parsers from '../../../parsers';
-import { isRuleEnabled } from '../../../runner';
+import { isRuleEnabled } from '../../../runner/runner';
 import { IRuleResult, Spectral } from '../../../spectral';
 import { FormatLookup } from '../../../types';
 import { ILintConfig } from '../../../types/config';

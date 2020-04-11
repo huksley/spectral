@@ -1,4 +1,4 @@
-import { Dictionary } from '@stoplight/types';
+import { Dictionary, Optional } from '@stoplight/types';
 import { AssertionError } from 'assert';
 import { escapeRegExp } from 'lodash';
 import { IFunction, IRule, RuleFunction } from '../types';
@@ -39,7 +39,7 @@ export const casing: IFunction<ICasingOptions> = (targetVal, opts) => {
     return;
   }
 
-  assertValidOptions(opts);
+  assertValidOptions(opts); // todo: cache?
 
   const casingValidator = buildFrom(CASES[opts.type], opts);
 
@@ -54,7 +54,13 @@ export const casing: IFunction<ICasingOptions> = (targetVal, opts) => {
   ];
 };
 
-function assertValidOptions(opts: ICasingOptions): asserts opts is ICasingOptions {
+function assertValidOptions(opts: Optional<ICasingOptions>): asserts opts is ICasingOptions {
+  if (opts === void 0) {
+    throw new AssertionError({
+      message: 'Options not provided',
+    });
+  }
+
   if (!(opts.type in CASES)) {
     throw new AssertionError({ message: `Invalid '${opts.type}' type value.` });
   }

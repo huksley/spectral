@@ -8,11 +8,11 @@ export interface IXorRuleOptions {
 export type XorRule = IRule<RuleFunction.XOR, IXorRuleOptions>;
 
 export const xor: IFunction<IXorRuleOptions> = (targetVal, opts) => {
+  const { properties } = opts!; // todo: validate
+
+  if (targetVal === null || typeof targetVal !== 'object' || properties.length !== 2) return;
+
   const results: IFunctionResult[] = [];
-
-  const { properties } = opts;
-
-  if (!targetVal || typeof targetVal !== 'object' || properties.length !== 2) return results;
 
   const intersection = Object.keys(targetVal).filter(value => -1 !== properties.indexOf(value));
   if (intersection.length !== 1) {

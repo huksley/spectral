@@ -44,6 +44,7 @@ describe('Spectral', () => {
       expect(s.rules).toEqual({
         'info-matches-stoplight': {
           ...ruleset.rules['info-matches-stoplight'],
+          given: /^info$/,
           name: 'info-matches-stoplight',
           severity: DiagnosticSeverity.Warning,
         },

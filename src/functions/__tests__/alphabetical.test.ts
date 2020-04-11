@@ -19,8 +19,8 @@ function runAlphabetical(target: any, keyedBy?: string) {
 }
 
 describe('alphabetical', () => {
-  test('given falsy target should return empty array', () => {
-    expect(runAlphabetical(false)).toEqual([]);
+  test('given falsy target should return nothing', () => {
+    expect(runAlphabetical(false)).toBeUndefined();
   });
 
   test('given single element target should return empty array', () => {

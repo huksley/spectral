@@ -8,9 +8,9 @@ export const unreferencedReusableObject: IFunction<{ reusableObjectsLocation: st
   _paths,
   otherValues,
 ) => {
-  if (!isObject(data)) return [];
+  if (!isObject(data)) return;
 
-  if (!opts.reusableObjectsLocation.startsWith('#')) {
+  if (!opts!.reusableObjectsLocation.startsWith('#')) {
     throw new Error(
       "Function option 'reusableObjectsLocation' doesn't look like containing a valid local json pointer.",
     );
@@ -18,7 +18,7 @@ export const unreferencedReusableObject: IFunction<{ reusableObjectsLocation: st
 
   const normalizedSource = otherValues.documentInventory.source ?? '';
 
-  const defined = Object.keys(data).map(name => `${normalizedSource}${opts.reusableObjectsLocation}/${name}`);
+  const defined = Object.keys(data).map(name => `${normalizedSource}${opts!.reusableObjectsLocation}/${name}`);
 
   const orphans = defined.filter(defPath => !otherValues.documentInventory.graph.hasNode(defPath));
 

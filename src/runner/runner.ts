@@ -1,17 +1,17 @@
-const allSettled = require('promise.allsettled');
-const { JSONPath } = require('jsonpath-plus');
 import { DiagnosticSeverity, Optional } from '@stoplight/types';
-import { flatMap } from 'lodash';
-import { STDIN } from './document';
-import { DocumentInventory } from './documentInventory';
+import { JSONPathCallback } from 'jsonpath-plus';
+import { STDIN } from '../document';
+import { DocumentInventory } from '../documentInventory';
+import { getDiagnosticSeverity } from '../rulesets/severity';
+import { IRuleResult, IRunRule } from '../types';
+import { hasIntersectingElement } from '../utils';
+import { generateDocumentWideResult } from '../utils/generateDocumentWideResult';
+import { IExceptionLocation, pivotExceptions } from '../utils/pivotExceptions';
 import { lintNode } from './linter';
-import { getDiagnosticSeverity } from './rulesets/severity';
-import { traverse } from './runner/traverse';
-import { FunctionCollection, IRuleResult, IRunRule, RunRuleCollection } from './types';
-import { RulesetExceptionCollection } from './types/ruleset';
-import { hasIntersectingElement } from './utils/';
-import { generateDocumentWideResult } from './utils/generateDocumentWideResult';
-import { IExceptionLocation, pivotExceptions } from './utils/pivotExceptions';
+import { traverse } from './traverse';
+import { IRunnerInternalContext, IRunnerPublicContext } from './types';
+
+const { JSONPath } = require('jsonpath-plus');
 
 export const isRuleEnabled = (rule: IRunRule) =>
   rule.severity !== void 0 && getDiagnosticSeverity(rule.severity) !== -1;
@@ -19,13 +19,6 @@ export const isRuleEnabled = (rule: IRunRule) =>
 const isStdInSource = (inventory: DocumentInventory): boolean => {
   return inventory.document.source === STDIN;
 };
-
-export interface IRunningContext {
-  documentInventory: DocumentInventory;
-  rules: RunRuleCollection;
-  functions: FunctionCollection;
-  exceptions: RulesetExceptionCollection;
-}
 
 const generateDefinedExceptionsButStdIn = (documentInventory: DocumentInventory): IRuleResult => {
   return generateDocumentWideResult(
@@ -36,15 +29,20 @@ const generateDefinedExceptionsButStdIn = (documentInventory: DocumentInventory)
   );
 };
 
-export const runRules = async (context: IRunningContext): Promise<IRuleResult[]> => {
+export const runRules = async (context: IRunnerPublicContext): Promise<IRuleResult[]> => {
   const { documentInventory, rules, exceptions } = context;
 
-  const results: Array<IRuleResult | IRuleResult[] | Promise<IRuleResult[]>> = [];
+  const runnerContext: IRunnerInternalContext = {
+    ...context,
+    results: [],
+    promises: [],
+  };
+
   const isStdIn = isStdInSource(documentInventory);
   const exceptRuleByLocations = isStdIn ? {} : pivotExceptions(exceptions, rules);
 
   if (isStdIn && Object.keys(exceptions).length > 0) {
-    results.push(generateDefinedExceptionsButStdIn(documentInventory));
+    runnerContext.results.push(generateDefinedExceptionsButStdIn(documentInventory));
   }
 
   const relevantRules = Object.values(rules).filter(
@@ -56,7 +54,9 @@ export const runRules = async (context: IRunningContext): Promise<IRuleResult[]>
           hasIntersectingElement(rule.formats, documentInventory.formats))),
   );
 
-
+  // const group = {
+  //
+  // }
 
   // for (const rule of relevantRules) {
   //
@@ -68,40 +68,32 @@ export const runRules = async (context: IRunningContext): Promise<IRuleResult[]>
   // const target = rule.resolved === false ? context.documentInventory.unresolved : context.documentInventory.resolved;
 
   // todo: distinguish between unresolved and resolved
-  traverse(Object(context.documentInventory.resolved), optimizedRules, (rule, node) => {
-    const diagnostics = lintNode(context, node, rule, exceptRuleByLocations[rule.name]);
-    if (diagnostics !== void 0) {
-      results.push(diagnostics);
-    }
+  traverse(Object(runnerContext.documentInventory.resolved), optimizedRules, (rule, node) => {
+    lintNode(runnerContext, node, rule, exceptRuleByLocations[rule.name]);
   });
 
   for (const rule of unoptimizedRules) {
-    runRule(context, rule, exceptRuleByLocations[rule.name], results);
+    runRule(runnerContext, rule, exceptRuleByLocations[rule.name]);
   }
 
-  return flatMap<PromiseSettledResult<IRuleResult[]>, IRuleResult>(await allSettled(results), result => {
-    if (result.status === 'fulfilled') {
-      return result.value;
-    } else {
-      // todo: use @stoplight/reporter
-      console.warn(result.reason);
-      return [];
-    }
-  });
+  if (runnerContext.promises.length > 0) {
+    await Promise.all(runnerContext.promises);
+  }
+
+  return runnerContext.results;
 };
 
 const runRule = (
-  context: IRunningContext,
+  context: IRunnerInternalContext,
   rule: IRunRule,
   exceptRuleByLocations: Optional<IExceptionLocation[]>,
-  results: Array<IRuleResult | IRuleResult[] | Promise<IRuleResult[]>>,
 ): void => {
   const target = rule.resolved === false ? context.documentInventory.unresolved : context.documentInventory.resolved;
 
   for (const given of Array.isArray(rule.given) ? rule.given : [rule.given]) {
     // don't have to spend time running jsonpath if given is $ - can just use the root object
     if (given === '$') {
-      const diagnostics = lintNode(
+      lintNode(
         context,
         {
           path: ['$'],
@@ -110,17 +102,13 @@ const runRule = (
         rule,
         exceptRuleByLocations,
       );
-
-      if (diagnostics !== void 0) {
-        results.push(diagnostics);
-      }
     } else {
       JSONPath({
         path: given,
         json: target,
         resultType: 'all',
-        callback: (result: any) => {
-          const diagnostics = lintNode(
+        callback: (result => {
+          lintNode(
             context,
             {
               path: JSONPath.toPathArray(result.path),
@@ -129,11 +117,7 @@ const runRule = (
             rule,
             exceptRuleByLocations,
           );
-
-          if (diagnostics !== void 0) {
-            results.push(diagnostics);
-          }
-        },
+        }) as JSONPathCallback,
       });
     }
   }

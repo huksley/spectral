@@ -11,8 +11,8 @@ import { JSONPath } from 'jsonpath-plus';
 
 import { Optional } from '@stoplight/types';
 
+import { getLintTargets } from '../runner/utils/getLintTargets';
 import { IFunction, IFunctionResult, IRule, RuleFunction } from '../types';
-import { getLintTargets } from '../utils';
 import { schema } from './schema';
 
 export interface ISchemaPathOptions {
@@ -26,11 +26,13 @@ export interface ISchemaPathOptions {
 export type SchemaPathRule = IRule<RuleFunction.SCHEMAPATH, ISchemaPathOptions>;
 
 export const schemaPath: IFunction<ISchemaPathOptions> = (targetVal, opts, paths, otherValues) => {
-  // The subsection of the targetVal which contains the good bit
-  const relevantItems = getLintTargets(targetVal, opts.field);
-
   // The subsection of the targetValue which contains the schema for us to validate the good bit against
-  const schemaObject = JSONPath({ path: opts.schemaPath, json: targetVal })[0];
+  const schemaObject = JSONPath({ path: opts!.schemaPath, json: targetVal });
+
+  if (!Array.isArray(schemaObject) || schemaObject.length === 0) return;
+
+  // The subsection of the targetVal which contains the good bit
+  const relevantItems = getLintTargets(targetVal, opts!.field); // todo: avoid this and validate
 
   const results: IFunctionResult[] = [];
 
@@ -38,8 +40,8 @@ export const schemaPath: IFunction<ISchemaPathOptions> = (targetVal, opts, paths
     const result = schema(
       relevantItem.value,
       {
-        schema: schemaObject,
-        oasVersion: opts.oasVersion,
+        schema: schemaObject[0],
+        oasVersion: opts!.oasVersion,
       },
       {
         given: paths.given,
