@@ -42,13 +42,13 @@ const isAKnownException = (
   return false;
 };
 
-export const lintNode = async (
+export const lintNode = (
   context: IRunningContext,
   node: IGivenNode,
   rule: IRunRule,
   exceptionLocations: Optional<IExceptionLocation[]>,
-): Promise<IRuleResult[]> => {
-  const results: IRuleResult[] = [];
+): Optional<IRuleResult[]> => {
+  let results: Optional<IRuleResult[]>;
 
   for (const then of Array.isArray(rule.then) ? rule.then : [rule.then]) {
     const func = context.functions[then.function];
@@ -62,19 +62,24 @@ export const lintNode = async (
     for (const target of targets) {
       const targetPath = [...givenPath, ...target.path];
 
-      const targetResults = await func(
-        target.value,
-        then.functionOptions,
-        {
-          given: givenPath,
-          target: targetPath,
-        },
-        {
-          original: node.value,
-          given: node.value,
-          documentInventory: context.documentInventory,
-        },
-      );
+      let targetResults;
+      try {
+        targetResults = func(
+          target.value,
+          then.functionOptions,
+          {
+            given: givenPath,
+            target: targetPath,
+          },
+          {
+            original: node.value,
+            given: node.value,
+            documentInventory: context.documentInventory,
+          },
+        ) as IRuleResult[];
+      } catch {
+        //
+      }
 
       if (targetResults === void 0) continue;
 
@@ -110,6 +115,8 @@ export const lintNode = async (
 
         const resultMessage = message(result.message, vars);
         vars.error = resultMessage;
+
+        if (results === void 0) results = [];
 
         results.push({
           code: rule.name,

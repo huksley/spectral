@@ -168,45 +168,25 @@
       "description": "Markdown descriptions should not contain `eval(`.",
       "recommended": true,
       "type": "style",
-      "given": "$..*",
-      "then": [
-        {
-          "field": "description",
-          "function": "pattern",
-          "functionOptions": {
-            "notMatch": "eval\\("
-          }
-        },
-        {
-          "field": "title",
-          "function": "pattern",
-          "functionOptions": {
-            "notMatch": "eval\\("
-          }
+      "given": ["$..description", "$..title"],
+      "then": {
+        "function": "pattern",
+        "functionOptions": {
+          "notMatch": "eval\\("
         }
-      ]
+      }
     },
     "no-script-tags-in-markdown": {
       "description": "Markdown descriptions should not contain `<script>` tags.",
       "recommended": true,
       "type": "style",
-      "given": "$..*",
-      "then": [
-        {
-          "field": "description",
-          "function": "pattern",
-          "functionOptions": {
-            "notMatch": "<script"
-          }
-        },
-        {
-          "field": "title",
-          "function": "pattern",
-          "functionOptions": {
-            "notMatch": "<script"
-          }
+      "given": ["$..description", "$..title"],
+      "then": {
+        "function": "pattern",
+        "functionOptions": {
+          "notMatch": "<script"
         }
-      ]
+      }
     },
     "openapi-tags-alphabetical": {
       "description": "OpenAPI object should have alphabetical `tags`.",
@@ -405,8 +385,9 @@
       "message": "{{error}}",
       "recommended": true,
       "type": "validation",
-      "given": "$..[?(@.enum && @.type)]",
+      "given": "$..*",
       "then": {
+        "field": "$.[?(@.enum && @.type)]",
         "function": "typedEnum"
       }
     },
@@ -553,9 +534,8 @@
       "recommended": true,
       "formats": ["oas2"],
       "type": "validation",
-      "given": "$..[?(@.anyOf)]",
+      "given": "$..anyOf",
       "then": {
-        "field": "anyOf",
         "function": "undefined"
       },
       "tags": [
@@ -568,9 +548,8 @@
       "recommended": true,
       "formats": ["oas2"],
       "type": "validation",
-      "given": "$..[?(@.oneOf)]",
+      "given": "$..oneOf",
       "then": {
-        "field": "oneOf",
         "function": "undefined"
       },
       "tags": [
@@ -723,8 +702,9 @@
       "recommended": true,
       "severity": 0,
       "type": "validation",
-      "given": "$..parameters..[?(@.example && @.schema)]",
+      "given": "$..parameters..",
       "then": {
+        "field": "$.[?(@.example && @.schema)]",
         "function": "schemaPath",
         "functionOptions": {
           "field": "example",
@@ -740,8 +720,9 @@
       "severity": 0,
       "formats": ["oas3"],
       "type": "validation",
-      "given": "$..headers..[?(@.example && @.schema)]",
+      "given": "$..headers..",
       "then": {
+        "field": "$.[?(@.example && @.schema)]",
         "function": "schemaPath",
         "functionOptions": {
           "field": "example",
@@ -825,8 +806,9 @@
       "formats": ["oas3"],
       "recommended": true,
       "type": "validation",
-      "given": "$..content..[?(@property !== 'properties' && @.example && (@.type || @.format || @.$ref))]",
+      "given": "$..content..",
       "then": {
+        "field": "$.[?(@property !== 'properties' && @.example && (@.type || @.format || @.$ref))]",
         "function": "schemaPath",
         "functionOptions": {
           "field": "example",

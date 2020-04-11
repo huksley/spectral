@@ -42,7 +42,7 @@ export interface IRule<T = string, O = any> {
   recommended?: boolean;
 
   // Filter the target down to a subset[] with a JSON path
-  given: string | string[];
+  given: string | string[] | RegExp | RegExp[];
 
   // If false, rule will operate on original (unresolved) data
   // If undefined or true, resolved data will be supplied

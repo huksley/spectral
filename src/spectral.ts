@@ -15,6 +15,7 @@ import { mergeExceptions } from './rulesets/mergers/exceptions';
 import { IRulesetReadOptions } from './rulesets/reader';
 import { DEFAULT_SEVERITY_LEVEL, getDiagnosticSeverity } from './rulesets/severity';
 import { runRules } from './runner';
+import { compile } from './runner/compile';
 import {
   FormatLookup,
   FunctionCollection,
@@ -125,13 +126,33 @@ export class Spectral {
   public setRules(rules: RuleCollection) {
     empty(this.rules);
 
-    for (const name in rules) {
-      if (!rules.hasOwnProperty(name)) continue;
-      const rule = rules[name];
+    for (const [name, rule] of Object.entries(rules)) {
+      let given = rule.given;
+
+      if (typeof given === 'string') {
+        given = compile(given) ?? given;
+      } else if (Array.isArray(given) && given.length > 0 && typeof given[0] === 'string') {
+        const newGiven: RegExp[] = [];
+        // todo: type guard
+        for (const item of given as string[]) {
+          const compiled = compile(item);
+          if (compiled !== null) {
+            newGiven.push(compiled);
+          } else {
+            newGiven.length = 0;
+            break;
+          }
+        }
+
+        if (newGiven.length > 0) {
+          given = newGiven;
+        }
+      }
 
       this.rules[name] = {
         name,
         ...rule,
+        given,
         severity: rule.severity === void 0 ? DEFAULT_SEVERITY_LEVEL : getDiagnosticSeverity(rule.severity),
       };
     }

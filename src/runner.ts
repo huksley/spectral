@@ -6,13 +6,15 @@ import { STDIN } from './document';
 import { DocumentInventory } from './documentInventory';
 import { lintNode } from './linter';
 import { getDiagnosticSeverity } from './rulesets/severity';
-import { FunctionCollection, IRule, IRuleResult, IRunRule, RunRuleCollection } from './types';
+import { traverse } from './runner/traverse';
+import { FunctionCollection, IRuleResult, IRunRule, RunRuleCollection } from './types';
 import { RulesetExceptionCollection } from './types/ruleset';
 import { hasIntersectingElement } from './utils/';
 import { generateDocumentWideResult } from './utils/generateDocumentWideResult';
 import { IExceptionLocation, pivotExceptions } from './utils/pivotExceptions';
 
-export const isRuleEnabled = (rule: IRule) => rule.severity !== void 0 && getDiagnosticSeverity(rule.severity) !== -1;
+export const isRuleEnabled = (rule: IRunRule) =>
+  rule.severity !== void 0 && getDiagnosticSeverity(rule.severity) !== -1;
 
 const isStdInSource = (inventory: DocumentInventory): boolean => {
   return inventory.document.source === STDIN;
@@ -37,7 +39,7 @@ const generateDefinedExceptionsButStdIn = (documentInventory: DocumentInventory)
 export const runRules = async (context: IRunningContext): Promise<IRuleResult[]> => {
   const { documentInventory, rules, exceptions } = context;
 
-  const results: Array<IRuleResult | Promise<IRuleResult[]>> = [];
+  const results: Array<IRuleResult | IRuleResult[] | Promise<IRuleResult[]>> = [];
   const isStdIn = isStdInSource(documentInventory);
   const exceptRuleByLocations = isStdIn ? {} : pivotExceptions(exceptions, rules);
 
@@ -45,17 +47,35 @@ export const runRules = async (context: IRunningContext): Promise<IRuleResult[]>
     results.push(generateDefinedExceptionsButStdIn(documentInventory));
   }
 
-  for (const rule of Object.values(rules)) {
-    if (!isRuleEnabled(rule)) continue;
+  const relevantRules = Object.values(rules).filter(
+    rule =>
+      isRuleEnabled(rule) &&
+      (rule.formats === void 0 ||
+        (documentInventory.formats !== null &&
+          documentInventory.formats !== void 0 &&
+          hasIntersectingElement(rule.formats, documentInventory.formats))),
+  );
 
-    if (
-      rule.formats !== void 0 &&
-      (documentInventory.formats === null ||
-        (documentInventory.formats !== void 0 && !hasIntersectingElement(rule.formats, documentInventory.formats)))
-    ) {
-      continue;
+
+
+  // for (const rule of relevantRules) {
+  //
+  // }
+  const optimizedRules = relevantRules.filter(
+    rule => rule.given instanceof RegExp || (Array.isArray(rule.given) && rule.given[0] instanceof RegExp),
+  );
+  const unoptimizedRules = relevantRules.filter(rule => !optimizedRules.includes(rule));
+  // const target = rule.resolved === false ? context.documentInventory.unresolved : context.documentInventory.resolved;
+
+  // todo: distinguish between unresolved and resolved
+  traverse(Object(context.documentInventory.resolved), optimizedRules, (rule, node) => {
+    const diagnostics = lintNode(context, node, rule, exceptRuleByLocations[rule.name]);
+    if (diagnostics !== void 0) {
+      results.push(diagnostics);
     }
+  });
 
+  for (const rule of unoptimizedRules) {
     runRule(context, rule, exceptRuleByLocations[rule.name], results);
   }
 
@@ -74,41 +94,45 @@ const runRule = (
   context: IRunningContext,
   rule: IRunRule,
   exceptRuleByLocations: Optional<IExceptionLocation[]>,
-  results: Array<IRuleResult | Promise<IRuleResult[]>>,
+  results: Array<IRuleResult | IRuleResult[] | Promise<IRuleResult[]>>,
 ): void => {
   const target = rule.resolved === false ? context.documentInventory.unresolved : context.documentInventory.resolved;
 
   for (const given of Array.isArray(rule.given) ? rule.given : [rule.given]) {
     // don't have to spend time running jsonpath if given is $ - can just use the root object
     if (given === '$') {
-      results.push(
-        lintNode(
-          context,
-          {
-            path: ['$'],
-            value: target,
-          },
-          rule,
-          exceptRuleByLocations,
-        ),
+      const diagnostics = lintNode(
+        context,
+        {
+          path: ['$'],
+          value: target,
+        },
+        rule,
+        exceptRuleByLocations,
       );
+
+      if (diagnostics !== void 0) {
+        results.push(diagnostics);
+      }
     } else {
       JSONPath({
         path: given,
         json: target,
         resultType: 'all',
         callback: (result: any) => {
-          results.push(
-            lintNode(
-              context,
-              {
-                path: JSONPath.toPathArray(result.path),
-                value: result.value,
-              },
-              rule,
-              exceptRuleByLocations,
-            ),
+          const diagnostics = lintNode(
+            context,
+            {
+              path: JSONPath.toPathArray(result.path),
+              value: result.value,
+            },
+            rule,
+            exceptRuleByLocations,
           );
+
+          if (diagnostics !== void 0) {
+            results.push(diagnostics);
+          }
         },
       });
     }

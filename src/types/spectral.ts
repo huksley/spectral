@@ -14,6 +14,10 @@ export interface IRunRule extends IRule {
   severity: SpectralDiagnosticSeverity;
 }
 
+export interface IOptimizedRunRule extends Omit<IRunRule, 'given'> {
+  given: RegExp | RegExp[];
+}
+
 export type SpectralDiagnosticSeverity = DiagnosticSeverity | -1;
 
 /**

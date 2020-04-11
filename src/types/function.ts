@@ -1,4 +1,4 @@
-import { JsonPath } from '@stoplight/types';
+import { JsonPath, Optional } from '@stoplight/types';
 import { DocumentInventory } from '../documentInventory';
 import { CoreFunctions } from '../functions';
 
@@ -8,7 +8,7 @@ export interface IFunctionContext {
 
 export type IFunction<O = any> = (
   targetValue: any,
-  options: O,
+  options: Optional<O>,
   paths: IFunctionPaths,
   otherValues: IFunctionValues,
 ) => void | IFunctionResult[] | Promise<void | IFunctionResult[]>;

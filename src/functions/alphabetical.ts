@@ -51,7 +51,7 @@ export const alphabetical: IFunction<IAlphaRuleOptions> = (targetVal, opts, path
     return results;
   }
 
-  const { keyedBy } = opts;
+  const keyedBy = opts?.keyedBy;
 
   const unsortedItems = getUnsortedItems<unknown>(
     targetArray,

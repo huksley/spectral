@@ -31,6 +31,7 @@ describe('Spectral', () => {
             oasRules[name] = {
               name,
               ...rule,
+              given: expect.anything(),
               formats: expect.arrayContaining([expect.any(String)]),
               severity: expect.any(Number),
               then: expect.any(Object),
@@ -40,6 +41,7 @@ describe('Spectral', () => {
           }, {}),
           'info-matches-stoplight': {
             ...customOASRuleset.rules['info-matches-stoplight'],
+            given: expect.anything(),
             name: 'info-matches-stoplight',
             severity: DiagnosticSeverity.Warning,
           },
@@ -85,6 +87,7 @@ describe('Spectral', () => {
       expect(s.rules).toEqual({
         'info-matches-stoplight': {
           ...ruleset.rules['info-matches-stoplight'],
+          given: /^info$/,
           name: 'info-matches-stoplight',
           severity: DiagnosticSeverity.Warning,
         },
