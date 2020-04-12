@@ -3,17 +3,18 @@ import { escapeRegExp } from 'lodash';
 
 const { Parser } = require('./parser/parser');
 
-const cache = new Map<string, RegExp | null>();
+const cache = new Map<string, RegExp | null>([
+  ['$', null],
+  ['$..*', /./],
+]);
 
 export function compile(path: string): RegExp | null {
-  if (path === '$') {
-    return null;
-  }
-
   const cachedValue = cache.get(path);
   if (cachedValue !== void 0) {
     return cachedValue;
   }
+
+  let possibilites = 1;
 
   try {
     const parser = new Parser();
@@ -23,24 +24,25 @@ export function compile(path: string): RegExp | null {
     for (const node of ast) {
       const { expression, operation, scope } = node;
       if (expression.type === 'root') continue;
+
+      if (scope === 'descendant') {
+        possibilites = Infinity;
+        segments.push('?.*');
+      }
+
       switch (operation) {
         case 'member':
           switch (expression.type) {
             case 'root':
               break;
             case 'identifier':
-              if (scope === 'descendant') {
-                segments.push(`(?:.*\/${escapeRegExp(expression.value)}|${escapeRegExp(expression.value)})`);
-              } else {
-                segments.push(escapeRegExp(expression.value));
-              }
-
+              segments.push(escapeRegExp(expression.value));
               break;
             case 'wildcard':
-              if (scope === 'descendant') {
-                segments.push('.*');
-              } else {
-                segments.push('\\/?[^/]*');
+              possibilites = Infinity;
+
+              if (scope !== 'descendant') {
+                segments.push('[^/]*');
               }
 
               break;
@@ -52,6 +54,7 @@ export function compile(path: string): RegExp | null {
 
         case 'subscript':
           if (expression.type === 'wildcard') {
+            possibilites = Infinity;
             segments.push('[0-9]+');
           } else {
             segments.push(serializeFilterExpression(expression.value.replace(/^\?/, '')));
@@ -62,7 +65,13 @@ export function compile(path: string): RegExp | null {
       }
     }
 
-    const value = new RegExp(`^${segments.join('\\/')}$`);
+    let value: RegExp;
+    if (ast.length === 2 && ast[1].scope === 'descendant') {
+      value = new RegExp(`(?:^|\\/)${segments[1]}$`);
+    } else {
+      value = new RegExp(`^${segments.join('\\/')}$`);
+    }
+
     cache.set(path, value);
     return value;
   } catch {
