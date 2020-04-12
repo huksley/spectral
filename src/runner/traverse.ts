@@ -1,11 +1,20 @@
-import { decodePointerFragment, encodePointerFragment } from '@stoplight/json';
-import { JsonPath, Segment } from '@stoplight/types';
+import { encodePointerFragment } from '@stoplight/json';
+import { JsonPath } from '@stoplight/types';
 import { IGivenNode, IRunRule } from '../types';
+import { decodeSegmentFragment } from '../utils';
 
 type Callback = (rule: IRunRule, node: IGivenNode) => void;
+type Cache = WeakMap<RegExp, boolean>;
 
-function decodeSegment(segment: Segment) {
-  return typeof segment === 'number' ? segment : decodePointerFragment(segment);
+function matches(cache: Cache, path: string, pattern: RegExp) {
+  const cachedValue = cache.get(pattern);
+  if (cachedValue !== void 0) {
+    return cachedValue;
+  }
+
+  const match = pattern.test(path);
+  cache.set(pattern, match);
+  return match;
 }
 
 function _traverse(curObj: object, rules: IRunRule[], path: JsonPath, cb: Callback) {
@@ -14,19 +23,20 @@ function _traverse(curObj: object, rules: IRunRule[], path: JsonPath, cb: Callba
     const length = path.push(encodePointerFragment(key));
     const stringifiedPath = path.join('/');
 
+    const node = {
+      path: path.map(decodeSegmentFragment),
+      value,
+    };
+
+    const cache: Cache = new WeakMap();
+
     for (const rule of rules) {
       if (!Array.isArray(rule.given)) {
-        if ((rule.given as RegExp).test(stringifiedPath)) {
-          cb(rule, {
-            path: path.map(decodeSegment).slice(),
-            value,
-          });
+        if (matches(cache, stringifiedPath, rule.given as RegExp)) {
+          cb(rule, node);
         }
-      } else if ((rule.given as RegExp[]).some(pattern => pattern.test(stringifiedPath))) {
-        cb(rule, {
-          path: path.map(decodeSegment).slice(),
-          value,
-        });
+      } else if ((rule.given as RegExp[]).some(pattern => matches(cache, stringifiedPath, pattern))) {
+        cb(rule, node);
       }
     }
 
