@@ -4,9 +4,10 @@ import { JsonPath, Optional } from '@stoplight/types';
 import { Document } from '../document';
 import { IMessageVars, message } from '../rulesets/message';
 import { getDiagnosticSeverity } from '../rulesets/severity';
-import { IFunctionResult, IGivenNode, IRunRule } from '../types';
+import { IFunctionResult, IGivenNode } from '../types';
 import { decodeSegmentFragment, getClosestJsonPath, printPath, PrintStyle } from '../utils';
 import { IExceptionLocation } from '../utils/pivotExceptions';
+import { Rule } from './rule';
 import { IRunnerInternalContext } from './types';
 import { getLintTargets } from './utils/getLintTargets';
 
@@ -45,7 +46,7 @@ const isAKnownException = (
 export const lintNode = (
   context: IRunnerInternalContext,
   node: IGivenNode,
-  rule: IRunRule,
+  rule: Rule,
   exceptionLocations: Optional<IExceptionLocation[]>,
 ): void => {
   const fnContext = {
@@ -56,7 +57,7 @@ export const lintNode = (
 
   const givenPath = node.path.length > 0 && node.path[0] === '$' ? node.path.slice(1) : node.path;
 
-  for (const then of Array.isArray(rule.then) ? rule.then : [rule.then]) {
+  for (const then of rule.then) {
     const func = context.functions[then.function];
     if (typeof func !== 'function') {
       console.warn(`Function ${then.function} not found. Called by rule ${rule.name}.`);
@@ -121,7 +122,7 @@ export const lintNode = (
 function processTargetResults(
   context: IRunnerInternalContext,
   results: IFunctionResult[],
-  rule: IRunRule,
+  rule: Rule,
   exceptionLocations: Optional<IExceptionLocation[]>,
   targetPath: JsonPath,
 ): void {
@@ -160,7 +161,8 @@ function processTargetResults(
 
     context.results.push({
       code: rule.name,
-      message: (rule.message === void 0 ? rule.description ?? resultMessage : message(rule.message, vars)).trim(),
+      // todo: rule.isInterpolable
+      message: (rule.message === null ? rule.description ?? resultMessage : message(rule.message, vars)).trim(),
       path,
       severity: getDiagnosticSeverity(rule.severity),
       ...(source !== null && { source }),

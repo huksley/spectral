@@ -1,5 +1,5 @@
 import { normalize } from '@stoplight/path';
-import { DiagnosticSeverity, Dictionary } from '@stoplight/types';
+import { DiagnosticSeverity } from '@stoplight/types';
 import * as fs from 'fs';
 import * as nock from 'nock';
 import * as path from 'path';
@@ -9,10 +9,11 @@ import { isOpenApiv2 } from '../formats';
 import { pattern } from '../functions/pattern';
 import * as Parsers from '../parsers';
 import { httpAndFileResolver } from '../resolvers/http-and-file';
-import { IRunRule, Spectral } from '../spectral';
+import { Rule } from '../runner/rule';
+import { RuleCollection, RunRuleCollection, Spectral } from '../spectral';
 
 const oasRuleset = require('../rulesets/oas/index.json');
-const oasRulesetRules: Dictionary<IRunRule, string> = oasRuleset.rules;
+const oasRulesetRules: RuleCollection = oasRuleset.rules;
 const customOASRuleset = require('./__fixtures__/custom-oas-ruleset.json');
 
 describe('Spectral', () => {
@@ -27,15 +28,14 @@ describe('Spectral', () => {
 
       expect(s.rules).toEqual(
         expect.objectContaining({
-          ...[...Object.entries(oasRulesetRules)].reduce<Dictionary<IRunRule, string>>((oasRules, [name, rule]) => {
-            oasRules[name] = {
-              name,
+          ...[...Object.entries(oasRulesetRules)].reduce<RunRuleCollection>((oasRules, [name, rule]) => {
+            oasRules[name] = new Rule(name, {
               ...rule,
               given: expect.anything(),
               formats: expect.arrayContaining([expect.any(String)]),
               severity: expect.any(Number),
               then: expect.any(Object),
-            };
+            });
 
             return oasRules;
           }, {}),

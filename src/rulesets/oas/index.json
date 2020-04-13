@@ -375,7 +375,7 @@
       "severity": 0,
       "recommended": true,
       "resolved": false,
-      "given": "$",
+      "given": "$..[?(@property === '$ref')]",
       "then": {
         "function": "refSiblings"
       }

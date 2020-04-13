@@ -1,22 +1,14 @@
 import { IResolveOpts, IResolveResult } from '@stoplight/json-ref-resolver/types';
 import { DiagnosticSeverity, Dictionary, IDiagnostic, JsonPath } from '@stoplight/types';
 import { JSONSchema4, JSONSchema6, JSONSchema7 } from 'json-schema';
-import { IFunction, IRule, Rule } from '.';
+import { IFunction, IRule } from '.';
+import { Rule } from '../runner/rule';
 import { ComputeFingerprintFunc } from '../utils';
 
 export type FunctionCollection = Dictionary<IFunction, string>;
-export type RuleCollection = Dictionary<Rule, string>;
-export type PartialRuleCollection = Dictionary<Partial<Rule>, string>;
-export type RunRuleCollection = Dictionary<IRunRule, string>;
-
-export interface IRunRule extends IRule {
-  name: string;
-  severity: SpectralDiagnosticSeverity;
-}
-
-export interface IOptimizedRunRule extends Omit<IRunRule, 'given'> {
-  given: RegExp | RegExp[];
-}
+export type RuleCollection = Dictionary<IRule, string>;
+export type PartialRuleCollection = Dictionary<Partial<IRule>, string>;
+export type RunRuleCollection = Dictionary<Rule, string>;
 
 export type SpectralDiagnosticSeverity = DiagnosticSeverity | -1;
 

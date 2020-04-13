@@ -2,19 +2,15 @@ import { DiagnosticSeverity, Optional } from '@stoplight/types';
 import { JSONPathCallback } from 'jsonpath-plus';
 import { STDIN } from '../document';
 import { DocumentInventory } from '../documentInventory';
-import { getDiagnosticSeverity } from '../rulesets/severity';
-import { IRuleResult, IRunRule } from '../types';
-import { hasIntersectingElement } from '../utils';
+import { IRuleResult } from '../types';
 import { generateDocumentWideResult } from '../utils/generateDocumentWideResult';
 import { IExceptionLocation, pivotExceptions } from '../utils/pivotExceptions';
 import { lintNode } from './linter';
-import { traverse } from './traverse';
+import { OptimizedRule, Rule } from './rule';
+import { traverse, TraverseCallback } from './traverse';
 import { IRunnerInternalContext, IRunnerPublicContext } from './types';
 
 const { JSONPath } = require('jsonpath-plus');
-
-export const isRuleEnabled = (rule: IRunRule) =>
-  rule.severity !== void 0 && getDiagnosticSeverity(rule.severity) !== -1;
 
 const isStdInSource = (inventory: DocumentInventory): boolean => {
   return inventory.document.source === STDIN;
@@ -46,31 +42,36 @@ export const runRules = async (context: IRunnerPublicContext): Promise<IRuleResu
   }
 
   const relevantRules = Object.values(rules).filter(
-    rule =>
-      isRuleEnabled(rule) &&
-      (rule.formats === void 0 ||
-        (documentInventory.formats !== null &&
-          documentInventory.formats !== void 0 &&
-          hasIntersectingElement(rule.formats, documentInventory.formats))),
+    rule => rule.enabled && rule.matchesFormat(documentInventory.formats),
   );
 
-  // const group = {
-  //
-  // }
+  const optimizedRules: OptimizedRule[] = [];
+  const optimizedUnresolvedRules: OptimizedRule[] = [];
+  const unoptimizedRules: Rule[] = [];
 
-  // for (const rule of relevantRules) {
-  //
-  // }
-  const optimizedRules = relevantRules.filter(
-    rule => rule.given instanceof RegExp || (Array.isArray(rule.given) && rule.given[0] instanceof RegExp),
-  );
-  const unoptimizedRules = relevantRules.filter(rule => !optimizedRules.includes(rule));
-  // const target = rule.resolved === false ? context.documentInventory.unresolved : context.documentInventory.resolved;
+  for (const rule of relevantRules) {
+    if (!(rule instanceof OptimizedRule)) {
+      unoptimizedRules.push(rule);
+    } else if (rule.resolved) {
+      rule.completed = false;
+      optimizedRules.push(rule);
+    } else {
+      rule.completed = false;
+      optimizedUnresolvedRules.push(rule);
+    }
+  }
 
-  // todo: distinguish between unresolved and resolved
-  traverse(Object(runnerContext.documentInventory.resolved), optimizedRules, (rule, node) => {
+  const traverseCb: TraverseCallback = (rule, node) => {
     lintNode(runnerContext, node, rule, exceptRuleByLocations[rule.name]);
-  });
+  };
+
+  if (optimizedRules.length > 0) {
+    traverse(Object(runnerContext.documentInventory.resolved), optimizedRules, traverseCb);
+  }
+
+  if (optimizedUnresolvedRules.length > 0) {
+    traverse(Object(runnerContext.documentInventory.unresolved), optimizedUnresolvedRules, traverseCb);
+  }
 
   for (const rule of unoptimizedRules) {
     runRule(runnerContext, rule, exceptRuleByLocations[rule.name]);
@@ -85,12 +86,12 @@ export const runRules = async (context: IRunnerPublicContext): Promise<IRuleResu
 
 const runRule = (
   context: IRunnerInternalContext,
-  rule: IRunRule,
+  rule: Rule,
   exceptRuleByLocations: Optional<IExceptionLocation[]>,
 ): void => {
-  const target = rule.resolved === false ? context.documentInventory.unresolved : context.documentInventory.resolved;
+  const target = rule.resolved ? context.documentInventory.resolved : context.documentInventory.unresolved;
 
-  for (const given of Array.isArray(rule.given) ? rule.given : [rule.given]) {
+  for (const given of rule.given) {
     // don't have to spend time running jsonpath if given is $ - can just use the root object
     if (given === '$') {
       lintNode(

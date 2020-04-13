@@ -13,8 +13,8 @@ import { readRuleset } from './rulesets';
 import { compileExportedFunction, setFunctionContext } from './rulesets/evaluators';
 import { mergeExceptions } from './rulesets/mergers/exceptions';
 import { IRulesetReadOptions } from './rulesets/reader';
-import { DEFAULT_SEVERITY_LEVEL, getDiagnosticSeverity } from './rulesets/severity';
 import { transformJsonPathsExpressions } from './runner/compile';
+import { OptimizedRule, Rule } from './runner/rule';
 import { runRules } from './runner/runner';
 import {
   FormatLookup,
@@ -127,12 +127,12 @@ export class Spectral {
     empty(this.rules);
 
     for (const [name, rule] of Object.entries(rules)) {
-      this.rules[name] = {
-        name,
-        ...rule,
-        given: transformJsonPathsExpressions(rule.given),
-        severity: rule.severity === void 0 ? DEFAULT_SEVERITY_LEVEL : getDiagnosticSeverity(rule.severity),
-      };
+      const expressions = transformJsonPathsExpressions(rule.given);
+      if (expressions === null) {
+        this.rules[name] = new Rule(name, rule);
+      } else {
+        this.rules[name] = new OptimizedRule(name, rule, Array.isArray(expressions) ? expressions : [expressions]);
+      }
     }
   }
 

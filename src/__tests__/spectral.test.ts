@@ -1,18 +1,18 @@
 import { IGraphNodeData } from '@stoplight/json-ref-resolver/types';
-import { DiagnosticSeverity, Dictionary } from '@stoplight/types';
+import { DiagnosticSeverity } from '@stoplight/types';
 import { DepGraph } from 'dependency-graph';
 import { escapeRegExp, merge } from 'lodash';
 
+import { buildRulesetExceptionCollectionFrom } from '../../setupTests';
 import { Document } from '../document';
 import * as Parsers from '../parsers';
-import { Spectral } from '../spectral';
-import { IResolver, IRunRule, RuleFunction } from '../types';
+import { Rule } from '../runner/rule';
+import { RuleCollection, RunRuleCollection, Spectral } from '../spectral';
+import { IResolver, RuleFunction } from '../types';
 import { RulesetExceptionCollection } from '../types/ruleset';
 
-import { buildRulesetExceptionCollectionFrom } from '../../setupTests';
-
 const oasRuleset = JSON.parse(JSON.stringify(require('../rulesets/oas/index.json')));
-const oasRulesetRules: Dictionary<IRunRule, string> = oasRuleset.rules;
+const oasRulesetRules: RuleCollection = oasRuleset.rules;
 
 describe('spectral', () => {
   describe('loadRuleset', () => {
@@ -22,15 +22,14 @@ describe('spectral', () => {
 
       expect(s.rules).toEqual(
         expect.objectContaining(
-          Object.entries(oasRulesetRules).reduce<Dictionary<IRunRule, string>>((oasRules, [name, rule]) => {
-            oasRules[name] = {
-              name,
+          Object.entries(oasRulesetRules).reduce<RunRuleCollection>((oasRules, [name, rule]) => {
+            oasRules[name] = new Rule(name, {
               ...rule,
               given: expect.anything(),
               formats: expect.arrayContaining([expect.any(String)]),
               severity: expect.any(Number),
               then: expect.any(Object),
-            };
+            });
 
             return oasRules;
           }, {}),
@@ -43,15 +42,14 @@ describe('spectral', () => {
       await s.loadRuleset(['spectral:oas', 'spectral:oas']);
 
       expect(s.rules).toEqual(
-        Object.entries(oasRulesetRules).reduce<Dictionary<IRunRule, string>>((oasRules, [name, rule]) => {
-          oasRules[name] = {
-            name,
+        Object.entries(oasRulesetRules).reduce<RunRuleCollection>((oasRules, [name, rule]) => {
+          oasRules[name] = new Rule(name, {
             ...rule,
             given: expect.anything(),
             formats: expect.arrayContaining([expect.any(String)]),
             severity: expect.any(Number),
             then: expect.any(Object),
-          };
+          });
 
           return oasRules;
         }, {}),

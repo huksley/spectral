@@ -3,30 +3,43 @@ import { escapeRegExp } from 'lodash';
 
 const { Parser } = require('./parser/parser');
 
-const cache = new Map<string, RegExp | null>([
+export type CompiledExpression = {
+  value: RegExp;
+  singleMatch: boolean;
+  deep: boolean;
+};
+
+const cache = new Map<string, CompiledExpression | null>([
   ['$', null],
-  ['$..*', /./],
+  [
+    '$..*',
+    {
+      deep: true,
+      singleMatch: false,
+      value: /./,
+    },
+  ],
 ]);
 
-export function compile(path: string): RegExp | null {
+export function compile(path: string): CompiledExpression | null {
   const cachedValue = cache.get(path);
   if (cachedValue !== void 0) {
     return cachedValue;
   }
 
-  let possibilites = 1;
-
   try {
     const parser = new Parser();
     const ast = parser.parse(path);
     const segments: string[] = [];
+    let singleMatch = true;
+    let deep = false;
 
     for (const node of ast) {
       const { expression, operation, scope } = node;
       if (expression.type === 'root') continue;
 
       if (scope === 'descendant') {
-        possibilites = Infinity;
+        deep = true;
         segments.push('?.*');
       }
 
@@ -39,7 +52,7 @@ export function compile(path: string): RegExp | null {
               segments.push(escapeRegExp(expression.value));
               break;
             case 'wildcard':
-              possibilites = Infinity;
+              singleMatch = false;
 
               if (scope !== 'descendant') {
                 segments.push('[^/]*');
@@ -54,7 +67,7 @@ export function compile(path: string): RegExp | null {
 
         case 'subscript':
           if (expression.type === 'wildcard') {
-            possibilites = Infinity;
+            deep = true;
             segments.push('[0-9]+');
           } else {
             segments.push(serializeFilterExpression(expression.value.replace(/^\?/, '')));
@@ -72,8 +85,14 @@ export function compile(path: string): RegExp | null {
       value = new RegExp(`^${segments.join('\\/')}$`);
     }
 
-    cache.set(path, value);
-    return value;
+    const compiledExpression: CompiledExpression = {
+      value,
+      singleMatch: singleMatch && !deep,
+      deep,
+    };
+
+    cache.set(path, compiledExpression);
+    return compiledExpression;
   } catch {
     cache.set(path, null);
     return null;
@@ -116,36 +135,28 @@ function serializeESTree(node: jsep.Expression): string {
         throw new Error('Unsupported literal');
       }
 
-      return String((node as jsep.Literal).value);
+      return escapeRegExp(String((node as jsep.Literal).value));
     default:
       throw new Error('Unsupported syntax');
   }
 }
 
 export function transformJsonPathsExpressions(
-  expressions: string | string[] | RegExp | RegExp[],
-): RegExp | RegExp[] | string | string[] {
+  expressions: string | string[],
+): CompiledExpression | CompiledExpression[] | null {
   if (typeof expressions === 'string') {
-    return compile(expressions) ?? expressions;
+    return compile(expressions);
   }
 
-  if (!Array.isArray(expressions) || isTransformedExpressionArray(expressions)) {
-    return expressions;
-  }
-
-  const transformedExpressions: RegExp[] = [];
+  const transformedExpressions: CompiledExpression[] = [];
   for (const item of expressions) {
     const compiled = compile(item);
     if (compiled !== null) {
       transformedExpressions.push(compiled);
     } else {
-      return expressions;
+      return null;
     }
   }
 
   return transformedExpressions;
-}
-
-function isTransformedExpressionArray(arr: RegExp[] | string[]): arr is RegExp[] {
-  return arr.length === 0 || typeof arr[0] !== 'string';
 }
