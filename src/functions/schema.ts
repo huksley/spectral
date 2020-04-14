@@ -164,7 +164,21 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
   const { schema: schemaObj } = opts;
 
   // we used the compiled validation now, hence this lookup here (see the logic above for more info)
-  const validator: IAjvValidator = validators.get(opts);
+  let validator: IAjvValidator;
+
+  try {
+    validator = validators.get(opts);
+  } catch (ex) {
+    if (ex instanceof AJV.MissingRefError) {
+      results.push({
+        message: ex.message,
+        path,
+      });
+      return results;
+    } else {
+      throw ex;
+    }
+  }
 
   PerformSchemaValidation(validator, targetVal, results, schemaObj, path, opts.prepareResults);
 
@@ -179,42 +193,33 @@ export function PerformSchemaValidation(
   path: JsonPath,
   prepareResults?: (errors: AJV.ErrorObject[]) => void,
 ) {
-  try {
-    if (!validator(targetVal) && validator.errors) {
-      prepareResults?.(validator.errors);
+  if (validator(targetVal) || !Array.isArray(validator.errors)) {
+    return;
+  }
 
-      try {
-        results.push(
-          ...(betterAjvErrors(schemaObj, targetVal, validator.errors, { format: 'js' }) as IAJVOutputError[]).map(
-            ({ suggestion, error, path: errorPath }) => ({
-              message: cleanAJVErrorMessage(error, errorPath, suggestion, typeof targetVal),
-              path: [...path, ...(errorPath ? errorPath.replace(/^\//, '').split('/') : [])],
-            }),
-          ),
-        );
-      } catch {
-        results.push(
-          ...validator.errors.map(({ message, dataPath }) => ({
-            message: message ? cleanAJVErrorMessage(message, dataPath, void 0, typeof targetVal) : '',
-            path: [
-              ...path,
-              ...dataPath
-                .split('/')
-                .slice(1)
-                .map(decodePointerFragment),
-            ],
-          })),
-        );
-      }
-    }
-  } catch (ex) {
-    if (ex instanceof AJV.MissingRefError) {
-      results.push({
-        message: ex.message,
-        path,
-      });
-    } else {
-      throw ex;
-    }
+  prepareResults?.(validator.errors);
+
+  try {
+    results.push(
+      ...(betterAjvErrors(schemaObj, targetVal, validator.errors, { format: 'js' }) as IAJVOutputError[]).map(
+        ({ suggestion, error, path: errorPath }) => ({
+          message: cleanAJVErrorMessage(error, errorPath, suggestion, typeof targetVal),
+          path: [...path, ...(errorPath ? errorPath.replace(/^\//, '').split('/') : [])],
+        }),
+      ),
+    );
+  } catch {
+    results.push(
+      ...validator.errors.map(({ message, dataPath }) => ({
+        message: message ? cleanAJVErrorMessage(message, dataPath, void 0, typeof targetVal) : '',
+        path: [
+          ...path,
+          ...dataPath
+            .split('/')
+            .slice(1)
+            .map(decodePointerFragment),
+        ],
+      })),
+    );
   }
 }
