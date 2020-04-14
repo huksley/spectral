@@ -72,7 +72,8 @@
               "type"
             ]
           }
-        }
+        },
+        "allErrors": true
       },
       "tags": [
         "given"
@@ -202,7 +203,8 @@
         "functionOptions": {
           "schema": {
             "$ref": "./schemas/schema.asyncapi2.json"
-          }
+          },
+          "allErrors": true
         }
       }
     },
@@ -252,7 +254,8 @@
           "schema": {
             "type": "object",
             "minProperties": 1
-          }
+          },
+          "allErrors": true
         }
       }
     },
@@ -395,7 +398,8 @@
         "function": "schemaPath",
         "functionOptions": {
           "field": "default",
-          "schemaPath": "$"
+          "schemaPath": "$",
+          "allErrors": true
         }
       }
     },
@@ -414,7 +418,8 @@
         "function": "schemaPath",
         "functionOptions": {
           "field": "example",
-          "schemaPath": "$"
+          "schemaPath": "$",
+          "allErrors": true
         }
       }
     },
@@ -433,7 +438,8 @@
         "function": "schemaPath",
         "functionOptions": {
           "field": "$.examples.*",
-          "schemaPath": "$"
+          "schemaPath": "$",
+          "allErrors": true
         }
       }
     }
