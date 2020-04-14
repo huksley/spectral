@@ -164,9 +164,9 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
   const { schema: schemaObj } = opts;
 
   // we used the compiled validation now, hence this lookup here (see the logic above for more info)
-    const validator: IAjvValidator = validators.get(opts);
+  const validator: IAjvValidator = validators.get(opts);
 
-  PerformSchemaValidation(validator, targetVal, results, schemaObj, path);
+  PerformSchemaValidation(validator, targetVal, results, schemaObj, path, opts.prepareResults);
 
   return results;
 };
@@ -177,10 +177,11 @@ export function PerformSchemaValidation(
   results: IFunctionResult[],
   schemaObj: object,
   path: JsonPath,
+  prepareResults?: (errors: AJV.ErrorObject[]) => void,
 ) {
   try {
     if (!validator(targetVal) && validator.errors) {
-      opts.prepareResults?.(validator.errors);
+      prepareResults?.(validator.errors);
 
       try {
         results.push(
