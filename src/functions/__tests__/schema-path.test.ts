@@ -138,11 +138,11 @@ describe('schema-path', () => {
     };
     expect(runSchemaPath(target, '$.schema.examples.*', path)).toEqual([
       {
-        message: '{{property|gravis|append-property|optional-typeof}}type should be string',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be string',
         path: ['schema', 'examples', '0'],
       },
       {
-        message: '{{property|gravis|append-property|optional-typeof}}type should be string',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be string',
         path: ['schema', 'examples', '2'],
       },
     ]);
