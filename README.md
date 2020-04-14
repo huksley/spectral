@@ -11,7 +11,7 @@ A flexible JSON/YAML linter, with out of the box support for OpenAPI v2/v3 and A
 ## Spectral Features
 
 - Create custom rules to lint JSON or YAML objects
-- Ready to use rules to validate and lint
+- Ready-to-use rules to validate and lint:
   - OpenAPI v2 _and_ v3 documents
   - AsyncAPI v2 documents
 - Use JSON path to apply rules to specific parts of your objects
