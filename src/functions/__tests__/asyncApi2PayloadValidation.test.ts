@@ -37,27 +37,27 @@ describe('asyncApi2PayloadValidation', () => {
     expect(results).toEqual([
       {
         // Doesn't match the AsyncApi2 schema object
-        message: '{{property|gravis|append-property|optional-typeof}}type should be object,boolean',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be object,boolean',
         path: ['$', 'components', 'messages', 'aMessage', 'examples', '0'],
       },
       {
         // Doesn't match the AsyncApi2 schema object
-        message: '{{property|gravis|append-property|optional-typeof}}type should be object',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be object',
         path: ['$', 'components', 'messages', 'aMessage', 'examples', '0'],
       },
       {
         // Doesn't match the payload schema object
-        message: '{{property|gravis|append-property|optional-typeof}}type should be integer',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be integer',
         path: ['$', 'components', 'messages', 'aMessage', 'examples', '1', 'value'],
       },
       {
         // Doesn't match the AsincApi2 schema object
-        message: '{{property|gravis|append-property|optional-typeof}}type should be boolean',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be boolean',
         path: ['$', 'components', 'messages', 'aMessage', 'examples', '1', 'deprecated'],
       },
       {
         // Doesn't match the payload schema object
-        message: '{{property|gravis|append-property|optional-typeof}}type should be integer',
+        message: '{{property|gravis|append-property|optional-typeof|capitalize}}type should be integer',
         path: ['$', 'components', 'messages', 'aMessage', 'examples', '3', 'value'],
       },
     ]);
