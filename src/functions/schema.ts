@@ -1,6 +1,7 @@
 import { decodePointerFragment } from '@stoplight/json';
 import { JsonPath, Optional } from '@stoplight/types';
 import * as AJV from 'ajv';
+import { ValidateFunction } from 'ajv';
 import * as jsonSpecv4 from 'ajv/lib/refs/json-schema-draft-04.json';
 import * as jsonSpecv6 from 'ajv/lib/refs/json-schema-draft-06.json';
 import { IOutputError } from 'better-ajv-errors';
@@ -88,7 +89,7 @@ function getSchemaId(schemaObj: JSONSchema): void | string {
   }
 }
 
-const validators = new (class extends WeakMap<JSONSchema, AJV.ValidateFunction> {
+const validators = new (class extends WeakMap<JSONSchema, ValidateFunction> {
   public get({ schema: schemaObj, oasVersion, allErrors }: ISchemaOptions) {
     const ajv = getAjv(oasVersion, allErrors);
     const schemaId = getSchemaId(schemaObj);
@@ -159,7 +160,7 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
   const { schema: schemaObj } = opts;
 
   // we used the compiled validation now, hence this lookup here (see the logic above for more info)
-  let validator: AJV.ValidateFunction;
+  let validator: ValidateFunction;
 
   try {
     validator = validators.get(opts);
@@ -181,7 +182,7 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
 };
 
 export function PerformSchemaValidation(
-  validator: AJV.ValidateFunction,
+  validator: ValidateFunction,
   targetVal: any,
   results: IFunctionResult[],
   schemaObj: object,
