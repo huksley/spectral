@@ -64,7 +64,7 @@ export class OptimizedRule extends Rule {
       const matched = OptimizedRule.matchesPath(path, expression.value, cache);
       if (matched) {
         if (expression.singleMatch) {
-          // this.completed = true;
+          this.completed = true;
         }
 
         return true;

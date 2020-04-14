@@ -1,15 +1,28 @@
 import { DiagnosticSeverity } from '@stoplight/types';
+import { functions } from '../../../../functions';
 import { RuleType, Spectral } from '../../../../spectral';
+import { setFunctionContext } from '../../../evaluators';
+import validSchemaExample from '../../functions/validSchemaExample';
+import validSchemaPrimitiveExample from '../../functions/validSchemaPrimitiveExample';
 import { rules } from '../../index.json';
 
 export default (ruleName: string, path: string) => {
-  const s = new Spectral();
-  s.registerFormat('oas3', () => true);
-  s.setRules({
-    [ruleName]: Object.assign(rules[ruleName], {
-      recommended: true,
-      type: RuleType[rules[ruleName].type],
-    }),
+  let s: Spectral;
+
+  beforeEach(() => {
+    s = new Spectral();
+
+    s.registerFormat('oas3', () => true);
+    s.setRules({
+      [ruleName]: Object.assign(rules[ruleName], {
+        recommended: true,
+        type: RuleType[rules[ruleName].type],
+      }),
+    });
+    s.setFunctions({
+      validSchemaExample: setFunctionContext({ functions }, validSchemaExample),
+      validSchemaPrimitiveExample: setFunctionContext({ functions }, validSchemaPrimitiveExample),
+    });
   });
 
   test('will pass when simple example is valid', async () => {
