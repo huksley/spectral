@@ -323,10 +323,11 @@
         "$.channels.*.[publish,subscribe][?(@property === 'message' && @.schemaFormat === void 0)].payload.default^"
       ],
       "then": {
-        "function": "asyncApi2PayloadValidation",
+        "function": "schemaPath",
         "functionOptions": {
           "field": "default",
-          "schemaPath": "$"
+          "schemaPath": "$",
+          "allErrors": true
         }
       }
     },
@@ -342,10 +343,11 @@
         "$.channels.*.[publish,subscribe][?(@property === 'message' && @.schemaFormat === void 0)].payload.example^"
       ],
       "then": {
-        "function": "asyncApi2PayloadValidation",
+        "function": "schemaPath",
         "functionOptions": {
           "field": "example",
-          "schemaPath": "$"
+          "schemaPath": "$",
+          "allErrors": true
         }
       }
     },
@@ -361,10 +363,11 @@
         "$.channels.*.[publish,subscribe][?(@property === 'message' && @.schemaFormat === void 0)].payload.examples^"
       ],
       "then": {
-        "function": "asyncApi2PayloadValidation",
+        "function": "schemaPath",
         "functionOptions": {
           "field": "$.examples.*",
-          "schemaPath": "$"
+          "schemaPath": "$",
+          "allErrors": true
         }
       }
     },
@@ -381,6 +384,21 @@
       "then": {
         "field": "schemaFormat",
         "function": "undefined"
+      }
+    },
+    "asyncapi2-valid-payload": {
+      "description": "Payloads must be valid against AsyncAPI Schema object.",
+      "message": "{{error}}",
+      "severity": 0,
+      "recommended": true,
+      "type": "validation",
+      "given": [
+        "$.components.messageTraits[?(@.schemaFormat === void 0)].payload",
+        "$.components.messages[?(@.schemaFormat === void 0)].payload",
+        "$.channels.*.[publish,subscribe][?(@property === 'message' && @.schemaFormat === void 0)].payload"
+      ],
+      "then": {
+        "function": "asyncApi2PayloadValidation"
       }
     },
     "asyncapi2-valid-schema-default": {

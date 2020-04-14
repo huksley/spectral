@@ -63,7 +63,7 @@ describe(`Rule '${ruleName}'`, () => {
   test('return result if components.messages.{message}.payload.default is not valid against the schema it decorates', async () => {
     const clone = cloneDeep(doc);
 
-    clone.components.messages.aMessage.payload.default = { deprecated: 17 };
+    clone.components.messages.aMessage.payload.default = { seventeen: 17 };
 
     const results = await s.run(clone, { ignoreUnknownFormat: false });
 
@@ -74,19 +74,13 @@ describe(`Rule '${ruleName}'`, () => {
         path: ['components', 'messages', 'aMessage', 'payload', 'default'],
         severity: rule.severity,
       }),
-      expect.objectContaining({
-        code: ruleName,
-        message: '`deprecated` property type should be boolean',
-        path: ['components', 'messages', 'aMessage', 'payload', 'default', 'deprecated'],
-        severity: rule.severity,
-      }),
     ]);
   });
 
   test('return result if components.messageTraits.{trait}.payload.default is not valid against the schema it decorates', async () => {
     const clone = cloneDeep(doc);
 
-    clone.components.messageTraits.aTrait.payload.default = { deprecated: 17 };
+    clone.components.messageTraits.aTrait.payload.default = { seventeen: 17 };
 
     const results = await s.run(clone, { ignoreUnknownFormat: false });
 
@@ -97,12 +91,6 @@ describe(`Rule '${ruleName}'`, () => {
         path: ['components', 'messageTraits', 'aTrait', 'payload', 'default'],
         severity: rule.severity,
       }),
-      expect.objectContaining({
-        code: ruleName,
-        message: '`deprecated` property type should be boolean',
-        path: ['components', 'messageTraits', 'aTrait', 'payload', 'default', 'deprecated'],
-        severity: rule.severity,
-      }),
     ]);
   });
 
@@ -111,7 +99,7 @@ describe(`Rule '${ruleName}'`, () => {
     async (property: string) => {
       const clone = cloneDeep(doc);
 
-      clone.channels['users/{userId}/signedUp'][property].message.payload.default = { deprecated: 17 };
+      clone.channels['users/{userId}/signedUp'][property].message.payload.default = { seventeen: 17 };
 
       const results = await s.run(clone, { ignoreUnknownFormat: false });
 
@@ -120,12 +108,6 @@ describe(`Rule '${ruleName}'`, () => {
           code: ruleName,
           message: 'Object should have required property `value`',
           path: ['channels', 'users/{userId}/signedUp', property, 'message', 'payload', 'default'],
-          severity: rule.severity,
-        }),
-        expect.objectContaining({
-          code: ruleName,
-          message: '`deprecated` property type should be boolean',
-          path: ['channels', 'users/{userId}/signedUp', property, 'message', 'payload', 'default', 'deprecated'],
           severity: rule.severity,
         }),
       ]);

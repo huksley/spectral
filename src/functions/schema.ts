@@ -88,12 +88,7 @@ function getSchemaId(schemaObj: JSONSchema): void | string {
   }
 }
 
-export interface IAjvValidator {
-  (data: any): boolean | PromiseLike<any>;
-  errors?: null | AJV.ErrorObject[];
-}
-
-const validators = new (class extends WeakMap<JSONSchema, IAjvValidator> {
+const validators = new (class extends WeakMap<JSONSchema, AJV.ValidateFunction> {
   public get({ schema: schemaObj, oasVersion, allErrors }: ISchemaOptions) {
     const ajv = getAjv(oasVersion, allErrors);
     const schemaId = getSchemaId(schemaObj);
@@ -164,7 +159,7 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
   const { schema: schemaObj } = opts;
 
   // we used the compiled validation now, hence this lookup here (see the logic above for more info)
-  let validator: IAjvValidator;
+  let validator: AJV.ValidateFunction;
 
   try {
     validator = validators.get(opts);
@@ -186,7 +181,7 @@ export const schema: IFunction<ISchemaOptions> = (targetVal, opts, paths) => {
 };
 
 export function PerformSchemaValidation(
-  validator: IAjvValidator,
+  validator: AJV.ValidateFunction,
   targetVal: any,
   results: IFunctionResult[],
   schemaObj: object,

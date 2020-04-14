@@ -4,7 +4,7 @@ import { buildTestSpectralWithAsyncApiRule } from '../../../../setupTests';
 import { Spectral } from '../../../spectral';
 import { IRunRule } from '../../../types';
 
-const ruleName = 'asyncapi2-valid-payload-examples';
+const ruleName = 'asyncapi2-valid-payload';
 let s: Spectral;
 let rule: IRunRule;
 
@@ -21,7 +21,6 @@ describe(`Rule '${ruleName}'`, () => {
       },
     },
     required: ['value'],
-    examples: [{ value: 17 }, { value: 18 }],
   };
 
   const doc: any = {
@@ -60,54 +59,54 @@ describe(`Rule '${ruleName}'`, () => {
     expect(results).toEqual([]);
   });
 
-  test('return result if components.messages.{message}.payload.examples.{position} is not valid against the schema it decorates', async () => {
+  test('return result if components.messages.{message}.payload.default is not valid against the schema it decorates', async () => {
     const clone = cloneDeep(doc);
 
-    clone.components.messages.aMessage.payload.examples[1] = { seventeen: 17 };
+    clone.components.messages.aMessage.payload.deprecated = 17;
 
     const results = await s.run(clone, { ignoreUnknownFormat: false });
 
     expect(results).toEqual([
       expect.objectContaining({
         code: ruleName,
-        message: 'Object should have required property `value`',
-        path: ['components', 'messages', 'aMessage', 'payload', 'examples', '1'],
+        message: '`deprecated` property type should be boolean',
+        path: ['components', 'messages', 'aMessage', 'payload', 'deprecated'],
         severity: rule.severity,
       }),
     ]);
   });
 
-  test('return result if components.messageTraits.{trait}.payload.examples.{position} is not valid against the schema it decorates', async () => {
+  test('return result if components.messageTraits.{trait}.payload.default is not valid against the schema it decorates', async () => {
     const clone = cloneDeep(doc);
 
-    clone.components.messageTraits.aTrait.payload.examples[1] = { seventeen: 17 };
+    clone.components.messageTraits.aTrait.payload.deprecated = 17;
 
     const results = await s.run(clone, { ignoreUnknownFormat: false });
 
     expect(results).toEqual([
       expect.objectContaining({
         code: ruleName,
-        message: 'Object should have required property `value`',
-        path: ['components', 'messageTraits', 'aTrait', 'payload', 'examples', '1'],
+        message: '`deprecated` property type should be boolean',
+        path: ['components', 'messageTraits', 'aTrait', 'payload', 'deprecated'],
         severity: rule.severity,
       }),
     ]);
   });
 
   test.each(['publish', 'subscribe'])(
-    'return result if channels.{channel}.%s.message.payload.examples.{position} is not valid against the schema it decorates',
+    'return result if channels.{channel}.%s.message.payload.default is not valid against the schema it decorates',
     async (property: string) => {
       const clone = cloneDeep(doc);
 
-      clone.channels['users/{userId}/signedUp'][property].message.payload.examples[1] = { seventeen: 17 };
+      clone.channels['users/{userId}/signedUp'][property].message.payload.deprecated = 17;
 
       const results = await s.run(clone, { ignoreUnknownFormat: false });
 
       expect(results).toEqual([
         expect.objectContaining({
           code: ruleName,
-          message: 'Object should have required property `value`',
-          path: ['channels', 'users/{userId}/signedUp', property, 'message', 'payload', 'examples', '1'],
+          message: '`deprecated` property type should be boolean',
+          path: ['channels', 'users/{userId}/signedUp', property, 'message', 'payload', 'deprecated'],
           severity: rule.severity,
         }),
       ]);
