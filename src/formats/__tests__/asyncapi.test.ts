@@ -1,15 +1,18 @@
 import { isAsyncApiv2 } from '../asyncapi';
 
 describe('AsyncApi format', () => {
-  describe('AsyncApi 2.0', () => {
-    it.each(['2.0.0'])('recognizes %s version correctly', version => {
+  describe('AsyncApi 2.{minor}.{patch}', () => {
+    it.each([['2.0.17'], ['2.9.0'], ['2.9.3']])('recognizes %s version correctly', (version: string) => {
       expect(isAsyncApiv2({ asyncapi: version })).toBe(true);
     });
 
     const testCases = [
       { asyncapi: '3.0' },
+      { asyncapi: '3.0.0' },
       { asyncapi: '2' },
       { asyncapi: '2.0' },
+      { asyncapi: '2.0.' },
+      { asyncapi: '2.0.01' },
       { asyncapi: '1.0' },
       { asyncapi: 2 },
       { openapi: '4.0' },
