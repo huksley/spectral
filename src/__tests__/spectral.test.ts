@@ -6,7 +6,6 @@ import { escapeRegExp, merge } from 'lodash';
 import { buildRulesetExceptionCollectionFrom } from '../../setupTests';
 import { Document } from '../document';
 import * as Parsers from '../parsers';
-import { Rule } from '../runner/rule';
 import { RuleCollection, RunRuleCollection, Spectral } from '../spectral';
 import { IResolver, RuleFunction } from '../types';
 import { RulesetExceptionCollection } from '../types/ruleset';
@@ -23,12 +22,13 @@ describe('spectral', () => {
       expect(s.rules).toEqual(
         expect.objectContaining(
           Object.entries(oasRulesetRules).reduce<RunRuleCollection>((oasRules, [name, rule]) => {
-            oasRules[name] = new Rule(name, {
-              ...rule,
+            oasRules[name] = expect.objectContaining({
               given: expect.anything(),
               formats: expect.arrayContaining([expect.any(String)]),
               severity: expect.any(Number),
-              then: expect.any(Object),
+              then: expect.any(Array),
+              message: rule.message ?? null,
+              description: rule.description ?? null,
             });
 
             return oasRules;
@@ -43,12 +43,13 @@ describe('spectral', () => {
 
       expect(s.rules).toEqual(
         Object.entries(oasRulesetRules).reduce<RunRuleCollection>((oasRules, [name, rule]) => {
-          oasRules[name] = new Rule(name, {
-            ...rule,
+          oasRules[name] = expect.objectContaining({
             given: expect.anything(),
             formats: expect.arrayContaining([expect.any(String)]),
             severity: expect.any(Number),
-            then: expect.any(Object),
+            then: expect.any(Array),
+            message: rule.message ?? null,
+            description: rule.description ?? null,
           });
 
           return oasRules;

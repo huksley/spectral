@@ -9,12 +9,9 @@ import { isOpenApiv2 } from '../formats';
 import { pattern } from '../functions/pattern';
 import * as Parsers from '../parsers';
 import { httpAndFileResolver } from '../resolvers/http-and-file';
-import { Rule } from '../runner/rule';
-import { RuleCollection, RunRuleCollection, Spectral } from '../spectral';
+import { Spectral } from '../spectral';
 
-const oasRuleset = require('../rulesets/oas/index.json');
-const oasRulesetRules: RuleCollection = oasRuleset.rules;
-const customOASRuleset = require('./__fixtures__/custom-oas-ruleset.json');
+const bareRuleset = require('./__fixtures__/bare-oas-ruleset.json');
 
 describe('Spectral', () => {
   afterEach(() => {
@@ -24,29 +21,16 @@ describe('Spectral', () => {
   describe('loadRuleset', () => {
     test('should support loading rulesets from filesystem', async () => {
       const s = new Spectral();
-      await s.loadRuleset(path.join(__dirname, '__fixtures__/custom-oas-ruleset.json'));
+      await s.loadRuleset(path.join(__dirname, '__fixtures__/bare-oas-ruleset.json'));
 
-      expect(s.rules).toEqual(
-        expect.objectContaining({
-          ...[...Object.entries(oasRulesetRules)].reduce<RunRuleCollection>((oasRules, [name, rule]) => {
-            oasRules[name] = new Rule(name, {
-              ...rule,
-              given: expect.anything(),
-              formats: expect.arrayContaining([expect.any(String)]),
-              severity: expect.any(Number),
-              then: expect.any(Object),
-            });
-
-            return oasRules;
-          }, {}),
-          'info-matches-stoplight': {
-            ...customOASRuleset.rules['info-matches-stoplight'],
-            given: expect.anything(),
-            name: 'info-matches-stoplight',
-            severity: DiagnosticSeverity.Warning,
-          },
+      expect(s.rules).toEqual({
+        'info-matches-stoplight': expect.objectContaining({
+          message: bareRuleset.rules['info-matches-stoplight'].message,
+          name: 'info-matches-stoplight',
+          given: [bareRuleset.rules['info-matches-stoplight'].given],
+          severity: DiagnosticSeverity.Warning,
         }),
-      );
+      });
 
       Object.keys(s.exceptions).forEach(p => expect(path.isAbsolute(p)).toEqual(true));
 
@@ -85,12 +69,12 @@ describe('Spectral', () => {
       await s.loadRuleset('https://localhost:4000/custom-ruleset');
 
       expect(s.rules).toEqual({
-        'info-matches-stoplight': {
-          ...ruleset.rules['info-matches-stoplight'],
-          given: /^info$/,
+        'info-matches-stoplight': expect.objectContaining({
+          message: bareRuleset.rules['info-matches-stoplight'].message,
           name: 'info-matches-stoplight',
+          given: [bareRuleset.rules['info-matches-stoplight'].given],
           severity: DiagnosticSeverity.Warning,
-        },
+        }),
       });
     });
   });
