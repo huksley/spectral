@@ -23,10 +23,7 @@
         "functionOptions": {
           "notMatch": "[\\?#]"
         }
-      },
-      "tags": [
-        "given"
-      ]
+      }
     },
     "asyncapi2-channel-path-no-trailing-slash": {
       "description": "Channel path should not end with a slash.",
@@ -37,10 +34,7 @@
         "functionOptions": {
           "notMatch": ".+\\/$"
         }
-      },
-      "tags": [
-        "given"
-      ]
+      }
     },
     "asyncapi2-headers-schema-type-object": {
       "description": "Headers schema type should be `object`.",
@@ -70,10 +64,7 @@
           }
         },
         "allErrors": true
-      },
-      "tags": [
-        "given"
-      ]
+      }
     },
     "asyncapi2-info-contact-properties": {
       "description": "Contact object should have `name`, `url` and `email`.",
@@ -110,10 +101,7 @@
       "then": {
         "field": "info.description",
         "function": "truthy"
-      },
-      "tags": [
-        "api"
-      ]
+      }
     },
     "asyncapi2-info-license-url": {
       "description": "License object should include `url`.",
@@ -132,10 +120,7 @@
       "then": {
         "field": "info.license",
         "function": "truthy"
-      },
-      "tags": [
-        "api"
-      ]
+      }
     },
     "asyncapi2-operation-description": {
       "description": "Operation `description` must be present and non-empty string.",
@@ -146,10 +131,7 @@
       "then": {
         "field": "description",
         "function": "truthy"
-      },
-      "tags": [
-        "operation"
-      ]
+      }
     },
     "asyncapi2-operation-operationId": {
       "description": "Operation should have an `operationId`.",
@@ -161,10 +143,7 @@
       "then": {
         "field": "operationId",
         "function": "truthy"
-      },
-      "tags": [
-        "operation"
-      ]
+      }
     },
     "asyncapi2-parameter-description": {
       "description": "Parameter objects should have a `description`.",
@@ -176,10 +155,7 @@
       "then": {
         "field": "description",
         "function": "truthy"
-      },
-      "tags": [
-        "parameters"
-      ]
+      }
     },
     "asyncapi2-schema": {
       "description": "Validate structure of AsyncAPI v2.0.0 Specification.",
@@ -266,10 +242,7 @@
         "functionOptions": {
           "keyedBy": "name"
         }
-      },
-      "tags": [
-        "api"
-      ]
+      }
     },
     "asyncapi2-tags": {
       "description": "AsyncAPI object should have non-empty `tags` array.",
@@ -278,10 +251,7 @@
       "then": {
         "field": "tags",
         "function": "truthy"
-      },
-      "tags": [
-        "api"
-      ]
+      }
     },
     "asyncapi2-unused-components-schema": {
       "description": "Potentially unused components schema has been detected.",
