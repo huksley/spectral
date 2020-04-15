@@ -5,7 +5,6 @@
   "rules": {
     "asyncapi2-channel-path-no-empty-parameter-declaration": {
       "description": "Channel path should not have empty parameter substitution pattern.",
-      "recommended": true,
       "type": "style",
       "given": "$.channels.*~",
       "then": {
@@ -17,7 +16,6 @@
     },
     "asyncapi2-channel-path-no-query-nor-fragment": {
       "description": "Channel path should not include a query (`?`) or a fragment (`#`) delimiter.",
-      "recommended": true,
       "type": "style",
       "given": "$.channels.*~",
       "then": {
@@ -32,7 +30,6 @@
     },
     "asyncapi2-channel-path-no-trailing-slash": {
       "description": "Channel path should not end with a slash.",
-      "recommended": true,
       "type": "style",
       "given": "$.channels.*~",
       "then": {
@@ -49,7 +46,6 @@
       "description": "Headers schema type should be `object`.",
       "message": "Headers schema type should be `object` ({{error}}).",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.messageTraits.*.headers",
@@ -81,7 +77,6 @@
     },
     "asyncapi2-info-contact-properties": {
       "description": "Contact object should have `name`, `url` and `email`.",
-      "recommended": true,
       "type": "style",
       "given": "$.info.contact",
       "then": [
@@ -101,7 +96,6 @@
     },
     "asyncapi2-info-contact": {
       "description": "Info object should contain `contact` object.",
-      "recommended": true,
       "type": "style",
       "given": "$",
       "then": {
@@ -111,7 +105,6 @@
     },
     "asyncapi2-info-description": {
       "description": "AsyncAPI object info `description` must be present and non-empty string.",
-      "recommended": true,
       "type": "style",
       "given": "$",
       "then": {
@@ -134,7 +127,6 @@
     },
     "asyncapi2-info-license": {
       "description": "AsyncAPI object should contain `license` object.",
-      "recommended": true,
       "type": "style",
       "given": "$",
       "then": {
@@ -147,7 +139,6 @@
     },
     "asyncapi2-operation-description": {
       "description": "Operation `description` must be present and non-empty string.",
-      "recommended": true,
       "type": "style",
       "given": [
         "$.channels.*.[publish,subscribe]"
@@ -163,7 +154,6 @@
     "asyncapi2-operation-operationId": {
       "description": "Operation should have an `operationId`.",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.channels.*.[publish,subscribe]"
@@ -195,7 +185,6 @@
       "description": "Validate structure of AsyncAPI v2.0.0 Specification.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": "$",
       "then": {
@@ -210,7 +199,6 @@
     },
     "asyncapi2-server-no-empty-variable-declaration": {
       "description": "Server URL should not have empty variable substitution pattern.",
-      "recommended": true,
       "type": "style",
       "given": "$.servers[*].url",
       "then": {
@@ -222,7 +210,6 @@
     },
     "asyncapi2-server-no-trailing-slash": {
       "description": "Server URL should not end with a slash.",
-      "recommended": true,
       "type": "style",
       "given": "$.servers[*].url",
       "then": {
@@ -245,7 +232,6 @@
     },
     "asyncapi2-servers": {
       "description": "AsyncAPI object should contain a non empty `servers` object.",
-      "recommended": true,
       "given": "$",
       "then": {
         "field": "servers",
@@ -287,7 +273,6 @@
     },
     "asyncapi2-tags": {
       "description": "AsyncAPI object should have non-empty `tags` array.",
-      "recommended": true,
       "type": "style",
       "given": "$",
       "then": {
@@ -300,7 +285,6 @@
     },
     "asyncapi2-unused-components-schema": {
       "description": "Potentially unused components schema has been detected.",
-      "recommended": true,
       "type": "style",
       "resolved": false,
       "given": "$.components.schemas",
@@ -315,7 +299,6 @@
       "description": "Default must be valid against its defined schema.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.messageTraits[?(@.schemaFormat === void 0)].payload.default^",
@@ -335,7 +318,6 @@
       "description": "Examples must be valid against its defined schema.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.messageTraits[?(@.schemaFormat === void 0)].payload.example^",
@@ -355,7 +337,6 @@
       "description": "Examples must be valid against their defined schema.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.messageTraits[?(@.schemaFormat === void 0)].payload.examples^",
@@ -374,7 +355,6 @@
     "asyncapi2-valid-payload-unsupported-schemaFormat": {
       "description": "Message schema validation is only supported with default unspecified `schemaFormat`.",
       "severity": 2,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.messageTraits.*",
@@ -390,7 +370,6 @@
       "description": "Payloads must be valid against AsyncAPI Schema object.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.messageTraits[?(@.schemaFormat === void 0)].payload",
@@ -405,7 +384,6 @@
       "description": "Default must be valid against its defined schema.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.schemas.*.default^",
@@ -425,7 +403,6 @@
       "description": "Examples must be valid against their defined schema.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.schemas.*.example^",
@@ -445,7 +422,6 @@
       "description": "Examples must be valid against their defined schema.",
       "message": "{{error}}",
       "severity": 0,
-      "recommended": true,
       "type": "validation",
       "given": [
         "$.components.schemas.*.examples^",
